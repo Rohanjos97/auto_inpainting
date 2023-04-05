@@ -1,5 +1,7 @@
 # ignore specified files
 /imagenet_class_index.json
+/APRICOTv1.0.tar
 
 # ignore specified folders
 .ipynb_checkpoints/
+APRICOTv1.0/
