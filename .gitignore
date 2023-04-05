@@ -1,0 +1,5 @@
+# ignore specified files
+/imagenet_class_index.json
+
+# ignore specified folders
+.ipynb_checkpoints/
