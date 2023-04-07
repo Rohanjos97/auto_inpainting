@@ -155,3 +155,5 @@ def inpaint(src_img, img, mask, radius=5):
 
             flags[nx, ny] = BAND
             heapq.heappush(band, (dist, nx, ny))
+            
+    return np.array(src_img)
