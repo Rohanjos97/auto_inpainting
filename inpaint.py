@@ -3,11 +3,6 @@ import numpy as np
 from math import sqrt as sqrt
 import heapq
 
-# parameters
-# in_path = 'test.png'
-in_path = 'chess.jpg'
-drawsize = 5
-
 # global variables
 INF = 1e7
 MIN = 1e-7
@@ -44,8 +39,7 @@ def solve(x1, y1, x2, y2, h, w, dists, flags):
         return 1.0 + dists[x2, y2]
     return INF
 
-
-def inpaint(src_img, mask, radius=5):
+def inpaint(src_img, img, mask, radius=5):
     height, width = src_img.shape[0:2]
 
     dists = np.full((height,width), INF, dtype=float)
@@ -161,46 +155,5 @@ def inpaint(src_img, mask, radius=5):
 
             flags[nx, ny] = BAND
             heapq.heappush(band, (dist, nx, ny))
-
-
-drawing = False
-ix, iy = -1, -1
-
-
-def draw_circle(event, x, y, flags, param):
-    global ix, iy, drawing, mode
-    if event == cv2.EVENT_LBUTTONDOWN:
-        drawing = True
-        ix, iy = x, y
-    elif event == cv2.EVENT_MOUSEMOVE:
-        if drawing == True:
-            cv2.circle(img1, (x, y), drawsize, (255, 255, 255), -1)
-            cv2.circle(img2, (x, y), drawsize, (255, 255, 255), -1)
-    elif event == cv2.EVENT_LBUTTONUP:
-        drawing = False
-        cv2.circle(img1, (x, y), drawsize, (255, 255, 255), -1)
-        cv2.circle(img2, (x, y), drawsize, (255, 255, 255), -1)
-
-
-img = cv2.imread(in_path)
-height, width = img.shape[0:2]
-img2 = np.zeros((height, width, 3), np.uint8)
-
-img1 = img.copy()
-cv2.namedWindow('image')
-cv2.setMouseCallback('image', draw_circle)
-while (1):
-    cv2.imshow('image', img1)
-    k = cv2.waitKey(1) & 0xFF
-    if k == ord('q'):
-        break
-
-# mask_img = cv2.imread(mask_path)
-# cv2.imshow('mask', img2)
-
-mask = img2[:, :, 0].astype(bool, copy=False)
-inpaint(img, mask)
-cv2.imshow('out', img)
-
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+            
+    return np.array(src_img)
