@@ -61,7 +61,7 @@ def change_dir(dir):
     os.chdir(dir)
     CURR_DIR = os.getcwd()
 
-class inpaint_defense:
+class auto_inpaint:
     def __init__(self, model=ResNet50(), activation_fn=tf_act.linear):
         '''
         Args:
