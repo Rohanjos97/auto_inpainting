@@ -62,7 +62,7 @@ def change_dir(dir):
     CURR_DIR = os.getcwd()
 
 class auto_inpaint:
-    def __init__(self, model=ResNet50(), activation_fn=tf_act.linear):
+    def __init__(self, model=ResNet50(), activation_fn=tf_act.linear, threshold=0.5):
         '''
         Args:
             model: The pre-trained model for making predictions
@@ -78,6 +78,7 @@ class auto_inpaint:
             new_predictions: The array of predictions after inpainting the adversarial image [?, class_index, object class, confidence]
             new_class_lbls: The array of class index the inpainted image belongs to
             cams: The batch of cam filter obtained for each image [?, 224, 224]
+            threshold: The threshold value to generate the binary mask
             patch_mask: The patch mask generated using a threshold value (0.5) [?, 224, 224]
             inpaint_images: The batch of images obtained after applying inpainting [?, 224, 224, 3]
             Activation_fn: The activation function used for generating heatmap of salient features
@@ -94,6 +95,7 @@ class auto_inpaint:
         self.adv_class_lbls = []
         self.new_class_lbls = []
         self.cams = []
+        self.threshold = threshold
         self.patch_masks = []
         self.inpaint_images = []
         self.activ_fn = activation_fn
@@ -323,7 +325,7 @@ class auto_inpaint:
             temp_cam = self.cams[ind].copy()        
 
             binary_patch_mask = []
-            binary_patch_mask = np.where(temp_cam >= 0.5, 1., 0.) # 1. - (temp_cam.mean())
+            binary_patch_mask = np.where(temp_cam >= self.threshold, 1., 0.) # 1. - (temp_cam.mean())
 
             self.patch_masks.append(np.array(binary_patch_mask))
 
@@ -463,7 +465,7 @@ class auto_inpaint:
         correct_new = 0
         n_success = 0
         n_samples = self.batch_size
-        filename = f"output_{self.activ_fn.__name__}.txt"
+        filename = f"act{self.activ_fn.__name__}_mdl{self.model.name}_bs{self.batch_size}_th{self.threshold}.txt"
 
         if n_samples != 0:
             for index in range(self.batch_size):
