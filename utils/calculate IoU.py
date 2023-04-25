@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[97]:
+# In[1]:
 
 
 import numpy as np
@@ -30,7 +30,7 @@ from tensorflow.keras.applications.resnet50 import (ResNet50,
 import tensorflow_addons as tfa
 
 
-# In[234]:
+# In[2]:
 
 
 SCALE_MIN = 0.3
@@ -38,6 +38,8 @@ SCALE_MAX = 0.3
 rotate_max = np.pi/8 # 22.5 degrees in either direction
 
 MAX_ROTATION = 22.5
+
+# os.chdir('..') # UNCOMMENT THIS IF USING FROM root/utils DIRECTORY
 ROOT_DIR = os.getcwd()
 
 model = ResNet50(weights='imagenet')
@@ -55,7 +57,7 @@ for i_dict in range(len(CLASS_INDEX)):
 IOU = []
 
 
-# In[228]:
+# In[3]:
 
 
 def circle_mask(shape, sharpness = 40):
@@ -190,7 +192,7 @@ def random_overlay(imgs, patch, image_shape, batch_size):
     return (imgs * inverted_mask + padded_patch * image_mask), (masked_img * inverted_mask + masked_padded_patch * masked_image_mask)
 
 
-# In[229]:
+# In[4]:
 
 
 def get_binary_mask(image, adv_class_lbl, adv_predictions):
@@ -208,7 +210,7 @@ def get_binary_mask(image, adv_class_lbl, adv_predictions):
     return cam
 
 
-# In[230]:
+# In[5]:
 
 
 def IoU(true_mask, pred_mask):
@@ -219,7 +221,7 @@ def IoU(true_mask, pred_mask):
     return iou
 
 
-# In[237]:
+# In[6]:
 
 
 def process_image(clean_image_gen, clean_img, clean_label, plot=False):
@@ -238,21 +240,28 @@ def process_image(clean_image_gen, clean_img, clean_label, plot=False):
     adv_class_lbl = classlabel.index(prediction[0][0][1])
     scorecam_mask = get_binary_mask(adv_trans_image, adv_class_lbl, adv_prediction)
 
-    scorecam_mask = np.where(scorecam_mask >= 1-scorecam_mask.mean(), 1., 0.)
+    scorecam_mask = np.where(scorecam_mask >= 0.5, 1., 0.)
 
 #     fig, axes = plt.subplots(1, 3)
+#     fig.tight_layout()
+    
 #     axes[0].imshow(adv_trans_image[0])
 #     axes[0].set_title('adv_trans_image')
-#     axes[1].imshow(random_patch_mask)
+#     axes[0].axis('off')
+    
+#     axes[1].imshow(random_patch_mask, cmap='gray')
 #     axes[1].set_title('random_patch_mask')
+#     axes[1].axis('off')
+    
 #     axes[2].imshow(scorecam_mask[0], cmap='gray')
 #     axes[2].set_title('scorecam_mask')
+#     axes[2].axis('off')
 
     iou = IoU(random_patch_mask, scorecam_mask)
     IOU.append(iou)
 
 
-# In[238]:
+# In[7]:
 
 
 os.chdir(ROOT_DIR)
@@ -265,8 +274,7 @@ os.getcwd()
 os.chdir(ROOT_DIR)
 
 # Set the DATA DIR
-clean_dir = r'IoU\clean_images'
-adv_dir = r'IoU\adv_images'
+clean_dir = r'resnet_40\clean_images'
 
 # Load the patch image
 patch_img = load_img(os.path.join(r'patch\resnet50_patch.png'), target_size=(224, 224, 3), interpolation='nearest')
@@ -286,12 +294,21 @@ clean_images_gen = image_dataset_from_directory(
     batch_size=50, # The dataset will yield individual samples.
     color_mode='rgb',
     shuffle=False)
-
+i =1
 for clean_img, clean_label in clean_images_gen.take(50):
     [process_image(clean_images_gen, clean_img, clean_lbl) for clean_img, clean_lbl in zip(clean_img, clean_label)]
 
-mean_IoU = np.mean(IOU)
-filename = f'IoU_{total_images}'
+meanIoU = np.mean(IOU)
+
+filename = f'IoU_resnet50'
+
 with open(filename, 'w')as f:
-    f.write(f'batch size: {total_images}\n')
     f.write(f'IoU: {meanIoU}')
+
+    print(meanIoU)
+
+
+# In[ ]:
+
+
+print(np.mean(IOU))
