@@ -27,7 +27,7 @@ from tensorflow.keras.applications.xception import (Xception,
                                                     decode_predictions as xception_decode_predictions)
 
 
-from tensorflow.keras.preprocessing import image_dataset_from_directory
+from tensorflow.keras.utils import image_dataset_from_directory
 from tensorflow.keras.preprocessing.image import load_img
 from tensorflow.keras.utils import img_to_array
 import tensorflow.keras.activations as tf_act
@@ -334,9 +334,9 @@ class auto_inpaint:
 
         self.patch_masks = cnv_lst_arr(self.patch_masks)
 
-    def apply_inpaint(self, show_plot=False):
+    def apply_inpaint(self, technique='base', show_plot=False):
         '''
-        Applies inpainting technique toremove adversarial patch from the images in the given batch.
+        Applies inpainting technique to remove adversarial patch from the images in the given batch.
         Also gives a plot of images obtained after inpainting along with class predictions
 
         Args:
@@ -352,6 +352,24 @@ class auto_inpaint:
 
             inpaint_img = inpaint(src_img, img, mask)
 
+            if technique == 'adaptive_hist':
+                # Convert the RGB image to LAB color space
+                image_lab = cv2.cvtColor(inpaint_img, cv2.COLOR_RGB2LAB)
+                
+                # Extract the L channel (luminance) from LAB
+                l_channel = image_lab[:, :, 0]
+                
+                # Apply Adaptive Histogram Equalization
+                clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+                l_channel_equalized = clahe.apply(l_channel)
+                
+                # Replace the equalized L channel in LAB
+                image_lab[:, :, 0] = l_channel_equalized
+                
+                # Convert the LAB image back to RGB
+                image_equalized = cv2.cvtColor(image_lab, cv2.COLOR_LAB2RGB)
+                inpaint_img = image_equalized.copy()
+                
             self.inpaint_images.append(inpaint_img)
 
             inpaint_img = np.expand_dims(inpaint_img.copy(), axis=0)
@@ -398,7 +416,7 @@ class auto_inpaint:
         plt.tight_layout()
         plt.show()
 
-    def generate_inpaint(self, step=10, grad_flag=False, mask_flag=False, inpaint_flag=False):
+    def generate_inpaint(self, step=10, technique='base', grad_flag=False, mask_flag=False, inpaint_flag=False):
         '''
         A function that performs the given tasks in sequential order. 
 
@@ -416,7 +434,7 @@ class auto_inpaint:
         self.gen_mask(show_plot=mask_flag)
 
         # Apply inpainting technique and get predictions for class
-        self.apply_inpaint(show_plot=inpaint_flag)
+        self.apply_inpaint(technique='base', show_plot=inpaint_flag)
 
     def plot_data(self, index):
         '''
